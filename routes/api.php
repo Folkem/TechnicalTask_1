@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\GeoController;
+use App\Http\Controllers\GeoCoordinatesController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('coordinates', [GeoController::class, 'addressByCoordinates']);
+Route::post('coordinates', [GeoCoordinatesController::class, 'addressByCoordinates']);
