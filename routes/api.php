@@ -1,11 +1,6 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\GeoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('hello', function () {
-    return response()->json([
-        'status' => 'success',
-        'message' => 'hello',
-    ]);
-});
+Route::post('coordinates', [GeoController::class, 'addressByCoordinates']);
