@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\GeoCoordinate;
 use App\Models\Region;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -73,6 +74,24 @@ class GeoCoordinatesController extends Controller
         return response()->json([
             'status' => 'fail',
             'message' => 'Місце за вказаними координатами не було знайдено',
+        ]);
+    }
+
+    public function addresses(Region $region)
+    {
+        if (empty($region)) {
+            return response()->json([
+                'status' => 'success',
+                'results' => GeoCoordinate::with('regions')->get(),
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'results' => GeoCoordinate::query()->with('regions')
+                ->whereHas('regions', function (Builder $query) use ($region) {
+                    $query->where('region_id', '=', $region->id);
+                })->get(),
         ]);
     }
 }
