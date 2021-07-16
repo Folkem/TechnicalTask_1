@@ -9,22 +9,23 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Class Region
+ * Class Street
  * @package App\Models
  * @property string $name
- * @property string $code
- * @property int $country_id
- * @property Country $country
- * @property Collection $localities
+ * @property int $number
+ * @property string $postal_code
+ * @property int $locality_id
+ * @property Collection $geoCoordinates
+ * @property Locality $locality
  */
-class Region extends Model
+class Street extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'name',
-        'code',
-        'country_id',
+        'number',
+        'postal_code',
     ];
 
     protected $casts = [
@@ -32,13 +33,13 @@ class Region extends Model
         'updated_at' => 'datetime',
     ];
 
-    public function country(): BelongsTo
+    public function geoCoordinates(): HasMany
     {
-        return $this->belongsTo(Country::class);
+        return $this->hasMany(GeoCoordinate::class);
     }
 
-    public function localities(): HasMany
+    public function locality(): BelongsTo
     {
-        return $this->hasMany(Locality::class);
+        return $this->belongsTo(Locality::class);
     }
 }

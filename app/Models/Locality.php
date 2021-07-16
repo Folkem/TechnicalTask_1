@@ -9,21 +9,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Class Region
+ * Class Locality
  * @package App\Models
  * @property string $name
- * @property string $code
  * @property int $country_id
- * @property Country $country
- * @property Collection $localities
+ * @property Collection $streets
+ * @property Region $region
  */
-class Region extends Model
+class Locality extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'name',
-        'code',
         'country_id',
     ];
 
@@ -32,13 +30,13 @@ class Region extends Model
         'updated_at' => 'datetime',
     ];
 
-    public function country(): BelongsTo
+    public function streets(): HasMany
     {
-        return $this->belongsTo(Country::class);
+        return $this->hasMany(Street::class);
     }
 
-    public function localities(): HasMany
+    public function region(): BelongsTo
     {
-        return $this->hasMany(Locality::class);
+        return $this->belongsTo(Region::class);
     }
 }

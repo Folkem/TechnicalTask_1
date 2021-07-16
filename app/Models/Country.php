@@ -5,26 +5,22 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Class Region
+ * Class Country
  * @package App\Models
  * @property string $name
  * @property string $code
- * @property int $country_id
- * @property Country $country
- * @property Collection $localities
+ * @property Collection $regions
  */
-class Region extends Model
+class Country extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'name',
         'code',
-        'country_id',
     ];
 
     protected $casts = [
@@ -32,13 +28,8 @@ class Region extends Model
         'updated_at' => 'datetime',
     ];
 
-    public function country(): BelongsTo
+    public function regions(): HasMany
     {
-        return $this->belongsTo(Country::class);
-    }
-
-    public function localities(): HasMany
-    {
-        return $this->hasMany(Locality::class);
+        return $this->hasMany(Region::class);
     }
 }

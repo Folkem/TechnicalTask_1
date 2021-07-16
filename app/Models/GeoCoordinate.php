@@ -5,12 +5,16 @@ namespace App\Models;
 use Geocoder\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * Class GeoCoordinate
  * @package App\Models
- * @property Collection $regions
+ * @property double $latitude
+ * @property double $longitude
+ * @property int $street_id
+ * @property Street $street
  */
 class GeoCoordinate extends Model
 {
@@ -19,11 +23,7 @@ class GeoCoordinate extends Model
     protected $fillable = [
         'latitude',
         'longitude',
-        'street_number',
-        'street_name',
-        'postal_code',
-        'locality',
-        'country',
+        'street_id',
     ];
 
     protected $casts = [
@@ -31,8 +31,8 @@ class GeoCoordinate extends Model
         'updated_at' => 'datetime',
     ];
 
-    public function regions(): BelongsToMany
+    public function street(): BelongsTo
     {
-        return $this->belongsToMany(Region::class);
+        return $this->belongsTo(Street::class);
     }
 }

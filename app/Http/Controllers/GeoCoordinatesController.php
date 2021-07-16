@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Country;
 use App\Models\GeoCoordinate;
 use App\Models\Region;
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,7 +30,7 @@ class GeoCoordinatesController extends Controller
         $result = app('geocoder')
             ->reverse(
                 $validated['latitude'],
-                $validated['longitude'],
+                $validated['longitude']
             )
             ->get()
             ->first();
@@ -36,34 +38,13 @@ class GeoCoordinatesController extends Controller
         if (isset($result)) {
             $result = $result->toArray();
 
-            $adminLevels = $result['adminLevels'];
-
-            $geoCoordinate = GeoCoordinate::query()->firstOrCreate([
-                'latitude' => $result['latitude'],
-                'longitude' => $result['longitude'],
-                'street_number' => $result['streetNumber'],
-                'street_name' => $result['streetName'],
-                'postal_code' => $result['postalCode'],
-                'locality' => $result['locality'],
-                'country' => $result['country'],
-            ]);
-
-            $regionIds = collect();
-            foreach ($adminLevels as $adminLevel) {
-                $adminLevelValues = [
-                    'name' => $adminLevel['name'],
-                    'code' => $adminLevel['code'],
-                    'level' => $adminLevel['level'],
-                ];
-                $region = Region::query()->where('name', $adminLevel['name'])
-                    ->where('code', $adminLevel['code'])
-                    ->where('level', $adminLevel['level'])
-                    ->firstOr(function () use ($adminLevelValues) {
-                        return Region::query()->create($adminLevelValues);
-                    });
-                $regionIds->add($region->id);
+            try {
+                $this->storeGeoCoordinateInformation($result);
+            } catch (Exception $e) {
+                logger()->warning(
+                    "{$e->getMessage()} at {$e->getFile()}:{$e->getLine()}"
+                );
             }
-            $geoCoordinate->regions()->sync($regionIds);
 
             return response()->json([
                 'status' => 'success',
@@ -77,21 +58,60 @@ class GeoCoordinatesController extends Controller
         ]);
     }
 
-    public function addresses(Region $region)
+    /**
+     * @param array $info location information, gotten from Geocoding API
+     * @throws Exception if location info contains data, which doesn't fit into the
+     * database constraints
+     */
+    private function storeGeoCoordinateInformation(array $info)
     {
-        if (empty($region)) {
+        $adminLevels = $info['adminLevels'];
+        $regionAdminLevel = $adminLevels['1'];
+
+        $country = Country::query()->firstOrCreate([
+            'name' => $info['country'],
+            'code' => $info['countryCode'],
+        ]);
+
+        $region = $country->regions()->firstOrCreate([
+            'name' => $regionAdminLevel['name'],
+            'code' => $regionAdminLevel['code'],
+        ]);
+
+        $city = $info['locality'] ?: $info['subLocality'];
+
+        $locality = $region->localities()->firstOrCreate([
+            'name' => $city,
+        ]);
+
+        $street = $locality->streets()->firstOrCreate([
+            'name' => $info['streetName'],
+            'number' => $info['streetNumber'],
+            'postal_code' => $info['postalCode'],
+        ]);
+
+        $street->geoCoordinates()->firstOrCreate([
+            'latitude' => $info['latitude'],
+            'longitude' => $info['longitude'],
+        ]);
+    }
+
+    public function addresses(Region $region): JsonResponse
+    {
+        if (empty($region->id)) {
             return response()->json([
                 'status' => 'success',
-                'results' => GeoCoordinate::with('regions')->get(),
+                'results' => GeoCoordinate::all(),
             ]);
         }
 
         return response()->json([
             'status' => 'success',
-            'results' => GeoCoordinate::query()->with('regions')
-                ->whereHas('regions', function (Builder $query) use ($region) {
-                    $query->where('region_id', '=', $region->id);
-                })->get(),
+            'results' => GeoCoordinate::query()
+                ->whereHas('street.locality.region', function (Builder $query) use ($region) {
+                    return $query->where('id', $region->id);
+                })
+                ->get(),
         ]);
     }
 }

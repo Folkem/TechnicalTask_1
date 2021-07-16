@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateGeoCoordinateRegionTable extends Migration
+class CreateRegionsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,14 +13,14 @@ class CreateGeoCoordinateRegionTable extends Migration
      */
     public function up()
     {
-        Schema::create('geo_coordinate_region', function (Blueprint $table) {
+        Schema::create('regions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('geo_coordinate_id')->constrained()
+            $table->string('name');
+            $table->string('code');
+            $table->foreignId('country_id')->constrained()
                 ->cascadeOnUpdate()
                 ->cascadeOnDelete();
-            $table->foreignId('region_id')->constrained()
-                ->cascadeOnUpdate()
-                ->cascadeOnDelete();
+            $table->timestamps();
         });
     }
 
@@ -31,6 +31,6 @@ class CreateGeoCoordinateRegionTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('geo_coordinate_region');
+        Schema::dropIfExists('regions');
     }
 }
